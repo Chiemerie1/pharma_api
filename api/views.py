@@ -7,8 +7,11 @@ from .models import (
 )
 from .serializers import (
     DrugCategorySerializer, DrugClassesSerializer, DrugsSerializer,
-    CitySerializer, PharmacySerializer
+    CitySerializer, PharmacySerializer, UserSerializer
 )
+from rest_framework import generics
+from django.contrib.auth.models import User
+
 
 
 
@@ -91,7 +94,7 @@ def get_drug_class(request):
 
 
 @api_view(["GET", "POST"])
-def drug(request):
+def drug(request, format=None):
     if request.method == "GET":
         drugs = Drugs.objects.all()
         serializer = DrugsSerializer(drugs, many=True)
@@ -107,7 +110,7 @@ def drug(request):
 
 
 @api_view(["GET", "POST"])
-def city(request):
+def city(request, format=None):
 
     if request.method == "GET":
         cities = City.objects.all()
@@ -137,3 +140,88 @@ def phrama(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+@api_view(["GET", "PUT", "DELETE"])
+def city_info(request, pk):
+
+    """
+        This function gets, modifies, and deletes a city.
+    """
+    try:
+        city = City.objects.get(pk=pk)
+    except city.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == "GET":
+        serializer = CitySerializer(city)
+        return Response(serializer.data)
+    
+    elif request.method == "PUT":
+        serializer = CitySerializer(city, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == "DELETE":
+        city.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+
+@api_view(["GET", "PUT", "DELETE"])
+def city_info(request, pk, format=None):
+
+    """
+        This function gets, modifies, and deletes a city.
+    """
+    try:
+        city = City.objects.get(pk=pk)
+    except city.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == "GET":
+        serializer = CitySerializer(city)
+        return Response(serializer.data)
+    
+    elif request.method == "PUT":
+        serializer = CitySerializer(city, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == "DELETE":
+        city.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+# serializing the user
+@api_view(["GET", "POST"])
+def user_list(request):
+    if request.method == "GET":
+        user = User.objects.all()
+        serializer = UserSerializer(user, many=True)
+        return Response(serializer.data)
+    
+    # elif request.method == "POST":
+    #     serializer = UserSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+@api_view(["GET"])
+def get_user(request, pk):
+
+    try:
+        user = User.objects.get(pk=pk)
+    except user.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    serializer = UserSerializer(user)
+    return Response(serializer.data)

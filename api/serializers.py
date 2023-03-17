@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 from .models import (
     DrugCategories, DrugClasses, Drugs,
     City, Pharmacy
@@ -35,3 +36,12 @@ class PharmacySerializer(serializers.ModelSerializer):
     class Meta:
         model = Pharmacy
         fields = ["name", "city"]
+
+
+
+class UserSerializer(serializers.ModelSerializer):
+    drugs = serializers.SlugRelatedField(many=True, queryset=Drugs.objects.all(), slug_field="name")
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "drugs"]
