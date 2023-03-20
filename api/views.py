@@ -1,5 +1,6 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import (
     DrugCategories, DrugClasses, Drugs,
@@ -9,7 +10,6 @@ from .serializers import (
     DrugCategorySerializer, DrugClassesSerializer, DrugsSerializer,
     CitySerializer, PharmacySerializer, UserSerializer
 )
-from rest_framework import generics
 from django.contrib.auth.models import User
 
 
@@ -94,7 +94,9 @@ def get_drug_class(request):
 
 
 @api_view(["GET", "POST"])
+@permission_classes((IsAuthenticated, ))
 def drug(request, format=None):
+
     if request.method == "GET":
         drugs = Drugs.objects.all()
         serializer = DrugsSerializer(drugs, many=True)
@@ -102,6 +104,38 @@ def drug(request, format=None):
     
     elif request.method =="POST":
         serializer = DrugsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+@api_view(["GET"])
+def single_drug(request, pk):
+    try:
+        drug = Drugs.objects.get(pk=pk)
+    except drug.DoesNotExist:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == "GET":
+        serialiizer = DrugsSerializer(drug)
+        return Response(serialiizer.data)
+    return Response(serialiizer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+        
+
+
+@api_view(["GET", "POST"])
+def phrama(request):
+
+    if request.method == "GET":
+        pharmacy = Pharmacy.objects.all()
+        serializer = PharmacySerializer(pharmacy, many=True)
+        return Response(serializer.data)
+    
+    elif request.method == "POST":
+        serializer = PharmacySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -123,24 +157,8 @@ def city(request, format=None):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-
-
-@api_view(["GET", "POST"])
-def phrama(request):
-
-    if request.method == "GET":
-        pharmacy = Pharmacy.objects.all()
-        serializer = PharmacySerializer(pharmacy, many=True)
-        return Response(serializer.data)
     
-    elif request.method == "POST":
-        serializer = PharmacySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
-    
+
 
 
 @api_view(["GET", "PUT", "DELETE"])
@@ -170,48 +188,12 @@ def city_info(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 
-
-@api_view(["GET", "PUT", "DELETE"])
-def city_info(request, pk, format=None):
-
-    """
-        This function gets, modifies, and deletes a city.
-    """
-    try:
-        city = City.objects.get(pk=pk)
-    except city.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    if request.method == "GET":
-        serializer = CitySerializer(city)
-        return Response(serializer.data)
-    
-    elif request.method == "PUT":
-        serializer = CitySerializer(city, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    elif request.method == "DELETE":
-        city.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
-
 # serializing the user
-@api_view(["GET", "POST"])
+@api_view(["GET"])
 def user_list(request):
-    if request.method == "GET":
-        user = User.objects.all()
-        serializer = UserSerializer(user, many=True)
-        return Response(serializer.data)
-    
-    # elif request.method == "POST":
-    #     serializer = UserSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    user = User.objects.all()
+    serializer = UserSerializer(user, many=True)
+    return Response(serializer.data)
     
 
 

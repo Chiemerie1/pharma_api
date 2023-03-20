@@ -1,8 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
 
-    
-    
+
 
 class DrugCategories(models.Model):
     cat_name = models.CharField(max_length=100)
@@ -20,12 +18,9 @@ class DrugClasses(models.Model):
 
 class Drugs(models.Model):
 
-    AVAILABLE = "AV"
-    UNAVAILABLE = "UNAV"
-
     AVAILABILITY = [
-        (AVAILABLE, "Available"),
-        (UNAVAILABLE, "Unavailable")
+        ("AVAILABLE", "Available"),
+        ("UNAVAILABLE", "Unavailable")
     ]
 
     name = models.CharField(max_length=100)
