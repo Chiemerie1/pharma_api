@@ -1,16 +1,24 @@
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status, renderers
+from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.contrib.auth.models import User
+from rest_framework.reverse import reverse
+from .permissions import IsOwnerOrReadOnly
+from rest_framework.generics import GenericAPIView
+
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie, vary_on_headers
+
 from .models import (
     DrugCategories, DrugClasses, Drugs,
     City, Pharmacy
 )
+
 from .serializers import (
     DrugCategorySerializer, DrugClassesSerializer, DrugsSerializer,
     CitySerializer, PharmacySerializer, UserSerializer
 )
-from django.contrib.auth.models import User
 
 
 
@@ -53,6 +61,10 @@ def view_routes(request):
             "body": None,
             "description": "returns or adds to the list of all pharmacies"
         },
+        {
+            
+            "description": "You can search for individual items by adding the primary key after a slash"
+        },
         
     ]
     return Response(routes)
@@ -94,7 +106,9 @@ def get_drug_class(request):
 
 
 @api_view(["GET", "POST"])
-@permission_classes((IsAuthenticated, ))
+@permission_classes((IsOwnerOrReadOnly, IsAuthenticated))
+@cache_page(60*60*2)
+@vary_on_cookie
 def drug(request, format=None):
 
     if request.method == "GET":
@@ -111,7 +125,8 @@ def drug(request, format=None):
     
 
 
-@api_view(["GET"])
+@api_view(["GET", "PUT", "DELETE"])
+@permission_classes((IsOwnerOrReadOnly, IsAuthenticated))
 def single_drug(request, pk):
     try:
         drug = Drugs.objects.get(pk=pk)
@@ -121,7 +136,19 @@ def single_drug(request, pk):
     if request.method == "GET":
         serialiizer = DrugsSerializer(drug)
         return Response(serialiizer.data)
-    return Response(serialiizer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == "PUT":
+        serialiizer = DrugsSerializer(drug, data=serialiizer.data)
+        if serialiizer.is_valid():
+            serialiizer.save()
+        return Response(serialiizer.data, status=status.HTTP_200_OK)
+    
+    elif request.method == "DELETE":
+        drug.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    elif drug is None:
+        return Response(serialiizer.errors, status=status.HTTP_400_BAD_REQUEST)
     
         
 
@@ -207,3 +234,46 @@ def get_user(request, pk):
     
     serializer = UserSerializer(user)
     return Response(serializer.data)
+
+
+# Creating endpoint for the root of the API
+@api_view(["GET"])
+def root(request, format=None):
+    return Response({
+        "users": reverse(user_list, request=request, format=format),
+        "drugs": reverse(drug, request=request, format=format),
+        "drug_class": reverse(get_drug_class, request=request, format=format),
+        "pharmacy": reverse(phrama, request=request, format=format),
+        "city": reverse(city, request=request, format=format),
+        "category": reverse(get_category, request=request, format=format),
+    })
+
+
+# def get(self, request, *args, **kwargs):
+#     drug = self.get_object()
+#     return Response(drug.highlighted)
+
+
+# @renderer_classes((renderers.StaticHTMLRenderer, ))
+# def drug_highlight(request):
+#     qs = Drugs.objects.all()
+#     get()
+
+
+class DrugPrice(GenericAPIView):
+    queryset = Drugs.objects.all()
+    renderer_classes = [renderers.StaticHTMLRenderer]
+
+    def get(self, request, *args, **kwargs):
+        drug = self.get_object()
+        return Response(drug.price)
+    
+
+
+class DrugDesc(GenericAPIView):
+    queryset = Drugs.objects.all()
+    renderer_classes = [renderers.StaticHTMLRenderer]
+
+    def get(self, request, *args, **kwargs):
+        drug = self.get_object()
+        return Response(drug.description)
