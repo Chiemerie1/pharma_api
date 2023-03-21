@@ -24,8 +24,8 @@ class Drugs(models.Model):
     ]
 
     name = models.CharField(max_length=100)
-    category = models.ForeignKey(DrugCategories, on_delete=models.CASCADE)
-    drug_class = models.ForeignKey(DrugClasses, on_delete=models.CASCADE)
+    category = models.ForeignKey(DrugCategories, related_name="category", on_delete=models.CASCADE)
+    drug_class = models.ForeignKey(DrugClasses, related_name="drug_class", on_delete=models.CASCADE)
     price = models.IntegerField(blank=True)
     description = models.TextField(max_length=500, blank=True)
     availability = models.CharField(max_length=20, choices=AVAILABILITY)

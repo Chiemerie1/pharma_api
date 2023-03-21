@@ -22,33 +22,17 @@ class DrugClassesSerializer(serializers.ModelSerializer):
 
 class DrugsSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
-    category = DrugCategorySerializer()
-    drug_class = DrugClassesSerializer()
+    category = DrugCategorySerializer(read_only=True)
+    drug_class = DrugClassesSerializer(read_only=True)
+    category_id = serializers.IntegerField()
+    drug_class_id = serializers.IntegerField()
+    owner_id = serializers.IntegerField()
+
+
 
     class Meta:
         model = Drugs
         fields = "__all__"
-
-    def create(self, validated_data):
-        name = validated_data.get("name")
-        category = validated_data.pop("category")
-        drug_class = validated_data.pop("drug_class")
-        description = validated_data.get("description")
-        availability = validated_data.get("availability")
-        owner = validated_data.get("owner.username")
-
-        owner = User.objects.all().filter(username=owner)
-
-        drug = Drugs.objects.create( **validated_data)
-
-        for cat in category:
-            DrugCategories.objects.create(drug=drug, **category)
-
-        for clas in drug_class:
-            DrugClasses.objects.create(drug=drug, **drug_class)
-            
-
-        return drug
 
 
 
@@ -67,8 +51,8 @@ class PharmacySerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # drugs = serializers.SlugRelatedField(many=True, queryset=Drugs.objects.all(), slug_field="name")
-    drugs = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    drugs = serializers.SlugRelatedField(many=True, queryset=Drugs.objects.all(), slug_field="name")
+    # drugs = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = User
