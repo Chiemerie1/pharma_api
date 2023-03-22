@@ -1,6 +1,9 @@
 from rest_framework import status, renderers
-from rest_framework.decorators import api_view, permission_classes, renderer_classes
+from rest_framework.decorators import api_view, permission_classes, renderer_classes, authentication_classes
+
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import SessionAuthentication, BaseAuthentication
+
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework.reverse import reverse
@@ -8,7 +11,10 @@ from .permissions import IsOwnerOrReadOnly
 from rest_framework.generics import GenericAPIView
 
 from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_cookie, vary_on_headers
+from django.views.decorators.vary import vary_on_cookie
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import (
     DrugCategories, DrugClasses, Drugs,
@@ -249,15 +255,6 @@ def root(request, format=None):
     })
 
 
-# def get(self, request, *args, **kwargs):
-#     drug = self.get_object()
-#     return Response(drug.highlighted)
-
-
-# @renderer_classes((renderers.StaticHTMLRenderer, ))
-# def drug_highlight(request):
-#     qs = Drugs.objects.all()
-#     get()
 
 
 class DrugPrice(GenericAPIView):
@@ -277,3 +274,19 @@ class DrugDesc(GenericAPIView):
     def get(self, request, *args, **kwargs):
         drug = self.get_object()
         return Response(drug.description)
+    
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['username'] = user.username
+
+        return token
+    
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
