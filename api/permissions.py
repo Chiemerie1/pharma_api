@@ -1,4 +1,5 @@
 from rest_framework import permissions
+from django.http import request
 
 
 
@@ -15,4 +16,4 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             return True
         
         return obj.owner == request.user
-
+    

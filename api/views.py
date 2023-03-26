@@ -15,6 +15,7 @@ from django.views.decorators.vary import vary_on_cookie
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenVerifyView
 
 from .models import (
     DrugCategories, DrugClasses, Drugs,
