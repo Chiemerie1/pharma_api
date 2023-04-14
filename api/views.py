@@ -94,7 +94,6 @@ def get_category(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-
 @api_view(["GET", "POST"])
 def get_drug_class(request):
     
@@ -112,24 +111,15 @@ def get_drug_class(request):
             
 
 
+
+# @permission_classes((IsOwnerOrReadOnly, IsAuthenticated))
 @api_view(["GET", "POST"])
-@permission_classes((IsOwnerOrReadOnly, IsAuthenticated))
 @cache_page(60*60*2)
 @vary_on_cookie
 def drug(request, format=None):
-
-    if request.method == "GET":
-        drugs = Drugs.objects.all()
-        serializer = DrugsSerializer(drugs, many=True)
-        return Response(serializer.data)
-    
-    elif request.method =="POST":
-        serializer = DrugsSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+    drugs = Drugs.objects.all()
+    serializer = DrugsSerializer(drugs, many=True)
+    return Response(serializer.data)
 
 
 @api_view(["GET", "PUT", "DELETE"])
