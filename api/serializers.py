@@ -40,10 +40,11 @@ class DrugsSerializer(serializers.ModelSerializer):
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
-        fields = ["city", "code"]
+        fields = ["city", "code", "id"]
 
 
 class PharmacySerializer(serializers.ModelSerializer):
+    city = CitySerializer()
     class Meta:
         model = Pharmacy
         fields = ["name", "city"]
